@@ -1,34 +1,40 @@
-import { BigNumber, Contract, ethers } from 'ethers';
-import fs from 'fs';
+import { BigNumber, ethers } from "ethers";
+import fs from "fs";
 import * as dotenv from "dotenv";
-dotenv.config({ path: __dirname+'/.env' });
+dotenv.config({ path: __dirname + "/.env" });
 
 async function main() {
-    const rpcUrl = process.env.RPC_URL;
-    if (!rpcUrl) {
-        throw new Error('Must specify RPC_URL via environment file');
-    }
-    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
-    
-    const passwordForDecryption = process.env.PRIVATE_KEY_PASSWORD;
-    if (!passwordForDecryption) {
-        throw new Error('Must specify PRIVATE_KEY_PASSWORD via environment file');
-    }
-    const encryptedJsonKey = fs.readFileSync('./encryptedKey.json', 'utf-8');
-    let wallet = ethers.Wallet.fromEncryptedJsonSync(encryptedJsonKey, passwordForDecryption);
-    wallet = await wallet.connect(provider);
-    
-    const abi = fs.readFileSync('./SimpleStorage_sol_SimpleStorage.abi', 'utf-8');
-    const binary = fs.readFileSync('./SimpleStorage_sol_SimpleStorage.bin', 'utf-8');
-    const contractFactory = new ethers.ContractFactory(abi, binary, wallet);
-    console.log('Deploying contract...');
-    const contract = await contractFactory.deploy();
-    console.log({contract});
-    // wait for 1 confirmation
-    const deploymentReceipt = await contract.deployTransaction.wait(1);
-    console.log({deploymentReceipt});
+  const rpcUrl = process.env.RPC_URL;
+  if (!rpcUrl) {
+    throw new Error("Must specify RPC_URL via environment file");
+  }
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
 
-    /*
+  const passwordForDecryption = process.env.PRIVATE_KEY_PASSWORD;
+  if (!passwordForDecryption) {
+    throw new Error("Must specify PRIVATE_KEY_PASSWORD via environment file");
+  }
+  const encryptedJsonKey = fs.readFileSync("./encryptedKey.json", "utf-8");
+  let wallet = ethers.Wallet.fromEncryptedJsonSync(
+    encryptedJsonKey,
+    passwordForDecryption
+  );
+  wallet = await wallet.connect(provider);
+
+  const abi = fs.readFileSync("./SimpleStorage_sol_SimpleStorage.abi", "utf-8");
+  const binary = fs.readFileSync(
+    "./SimpleStorage_sol_SimpleStorage.bin",
+    "utf-8"
+  );
+  const contractFactory = new ethers.ContractFactory(abi, binary, wallet);
+  console.log("Deploying contract...");
+  const contract = await contractFactory.deploy();
+  console.log({ contract });
+  // wait for 1 confirmation
+  const deploymentReceipt = await contract.deployTransaction.wait(1);
+  console.log({ deploymentReceipt });
+
+  /*
     // Alternatively, we can deploy manually using raw transaction data
     const tx = {
         nonce: await wallet.getTransactionCount(),
@@ -44,16 +50,17 @@ async function main() {
     console.log({transactionReceipt});
     */
 
-    const currentFavoriteNumber: BigNumber = await contract.retrieve();
-    console.log(`Current favorite number: ${currentFavoriteNumber.toString()}`);
-    const txResponse = await contract.store('7');
-    const txReceipt = await txResponse.wait(1);
-    const updatedFavoreitNumber: BigNumber = await contract.retrieve();
-    console.log(`Updated favorite number: ${updatedFavoreitNumber.toString()}`);
-}   
+  const currentFavoriteNumber: BigNumber = await contract.retrieve();
+  console.log(`Current favorite number: ${currentFavoriteNumber.toString()}`);
+  const txResponse = await contract.store("7");
+  await txResponse.wait(1);
+  const updatedFavoreitNumber: BigNumber = await contract.retrieve();
+  console.log(`Updated favorite number: ${updatedFavoreitNumber.toString()}`);
+}
 
-main().then(() => process.exit(0))
-.catch((error) => {
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
     console.error(error);
     process.exit(1);
-});
+  });
