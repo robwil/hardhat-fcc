@@ -1,10 +1,15 @@
 import { BigNumber, Contract, ethers } from 'ethers';
 import fs from 'fs';
+import * as dotenv from "dotenv";
+dotenv.config({ path: __dirname+'/.env' });
 
 async function main() {
     const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7545');
     // Private key is from Ganache, so nbd to commit for now.
-    const privateKeyForDev = 'b1a6478d1ffa82eb9272a110ed39b454b1c5ca0c9c48d126fa6ba1cc0fd28b79';
+    const privateKeyForDev = process.env.PRIVATE_KEY_FOR_DEV;
+    if (!privateKeyForDev) {
+        throw new Error('Must specify PRIVATE_KEY_FOR_DEV via environment file');
+    }
     const wallet = new ethers.Wallet(privateKeyForDev, provider);
     
     const abi = fs.readFileSync('./SimpleStorage_sol_SimpleStorage.abi', 'utf-8');
