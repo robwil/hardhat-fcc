@@ -4,13 +4,19 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: __dirname+'/.env' });
 
 async function main() {
-    const provider = new ethers.providers.JsonRpcProvider('http://127.0.0.1:7545');
-    // Private key is from Ganache, so nbd to commit for now.
-    const privateKeyForDev = process.env.PRIVATE_KEY_FOR_DEV;
-    if (!privateKeyForDev) {
-        throw new Error('Must specify PRIVATE_KEY_FOR_DEV via environment file');
+    const rpcUrl = process.env.RPC_URL;
+    if (!rpcUrl) {
+        throw new Error('Must specify RPC_URL via environment file');
     }
-    const wallet = new ethers.Wallet(privateKeyForDev, provider);
+    const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+    
+    const passwordForDecryption = process.env.PRIVATE_KEY_PASSWORD;
+    if (!passwordForDecryption) {
+        throw new Error('Must specify PRIVATE_KEY_PASSWORD via environment file');
+    }
+    const encryptedJsonKey = fs.readFileSync('./encryptedKey.json', 'utf-8');
+    let wallet = ethers.Wallet.fromEncryptedJsonSync(encryptedJsonKey, passwordForDecryption);
+    wallet = await wallet.connect(provider);
     
     const abi = fs.readFileSync('./SimpleStorage_sol_SimpleStorage.abi', 'utf-8');
     const binary = fs.readFileSync('./SimpleStorage_sol_SimpleStorage.bin', 'utf-8');
