@@ -19,7 +19,7 @@ describe('FundMe', () => {
 
   describe('contructor', () => {
     it('sets the aggregator address correctly', async () => {
-      const response = await fundMe.priceFeed();
+      const response = await fundMe.s_priceFeed();
       expect(response).to.equal(mockV3Aggregator.address);
     });
   });
@@ -32,12 +32,14 @@ describe('FundMe', () => {
     });
     it('updates amount funded data structure', async () => {
       await fundMe.fund({ value: sendAmount });
-      const amountFunded = await fundMe.addressToAmountFunded(deployerAddress);
+      const amountFunded = await fundMe.getAmountFundedByAddress(
+        deployerAddress
+      );
       expect(amountFunded.toString()).to.equal(sendAmount);
     });
     it('adds funder to array of funders', async () => {
       await fundMe.fund({ value: sendAmount });
-      const firstFunderAddress = await fundMe.funders(0);
+      const firstFunderAddress = await fundMe.getFunder(0);
       expect(firstFunderAddress).to.equal(deployerAddress);
     });
   });
@@ -118,9 +120,11 @@ describe('FundMe', () => {
       );
 
       // Assert data structures
-      await expect(fundMe.funders(0)).to.be.reverted;
+      await expect(fundMe.getFunder(0)).to.be.reverted;
       for (const account of accounts) {
-        expect(await fundMe.addressToAmountFunded(account.address)).to.equal(0);
+        expect(await fundMe.getAmountFundedByAddress(account.address)).to.equal(
+          0
+        );
       }
     });
     it('prevents non-owner from withdrawing', async () => {
